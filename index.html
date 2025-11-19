@@ -274,63 +274,70 @@
 <script type="module">
     // --- Firebase Imports ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, addDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // Set Firestore logging to debug
     setLogLevel('Debug');
 
-    // --- Firebase Global Variables (Mandatory Canvas Context) ---
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    let firebaseConfig;
-    try {
-        firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-    } catch(e) {
-        console.error("Failed to parse Firebase config:", e);
-        firebaseConfig = {};
-    }
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    // ====================================================================
+    // 📢 IMPORTANT: PUBLIC DEPLOYMENT CONFIGURATION
+    // You MUST replace the placeholder values below with your actual 
+    // public configuration object from your Firebase console.
+    // ====================================================================
+   // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBMlyMbSEW7kJrh0Xjv3DS59u2fvyhIL9o",
+  authDomain: "grandmas-christmas-crisis.firebaseapp.com",
+  projectId: "grandmas-christmas-crisis",
+  storageBucket: "grandmas-christmas-crisis.firebasestorage.app",
+  messagingSenderId: "729701269664",
+  appId: "1:729701269664:web:f4f8dd9b04d7fd431709c5",
+  measurementId: "G-1KZDG4BXPS"
+};
+    // 🛑 STEP 2B: Define a static app ID for the leaderboard path
+    const appId = "winter-rush-leaderboard"; 
+    // ====================================================================
 
     let app, db, auth;
-    let userId = ''; // Still maintained internally for traceability if needed, but not displayed.
+    let userId = ''; 
 
-    // --- Firebase Initialization and Authentication ---
+    // --- Firebase Initialization and Authentication (Modified for Public Use) ---
     async function initFirebase() {
-        if (Object.keys(firebaseConfig).length === 0) {
-            console.error("Firebase is not configured. Leaderboard will be disabled.");
-            return;
-        }
-        
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+        if (!PUBLIC_FIREBASE_CONFIG.apiKey.includes("YOUR_API_KEY")) {
+            // Use the public config for initialization
+            try {
+                app = initializeApp(PUBLIC_FIREBASE_CONFIG);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
+                // We now use anonymous sign-in, as custom tokens are not available externally.
                 await signInAnonymously(auth);
-            }
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    // document.getElementById('user-id-val').innerText = userId; // Removed display update
-                    console.log("User authenticated:", userId);
-                    setupLeaderboardListener();
-                } else {
-                    console.log("No user signed in.");
-                    // document.getElementById('user-id-val').innerText = 'N/A'; // Removed display update
-                }
-            });
-            
-        } catch(e) {
-            console.error("Firebase initialization or sign-in failed:", e);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("User authenticated anonymously:", userId);
+                        setupLeaderboardListener();
+                    } else {
+                        console.log("No user signed in.");
+                    }
+                });
+                
+            } catch(e) {
+                console.error("Firebase initialization or sign-in failed. Did you paste your config? See error:", e);
+                document.getElementById('leaderboard-list').innerHTML = "<li>Error: Leaderboard unavailable. Check console.</li>";
+            }
+        } else {
+            console.warn("Firebase configuration is using placeholders. Leaderboard disabled.");
+            document.getElementById('leaderboard-list').innerHTML = "<li>Leaderboard disabled (Need config).</li>";
         }
     }
     
     // Leaderboard Collection Path: /artifacts/{appId}/public/data/leaderboard
+    // Note: We are using a static, public 'appId' since we are outside the canvas environment.
     const LEADERBOARD_PATH = `artifacts/${appId}/public/data/leaderboard`;
 
     // Function to set up the real-time leaderboard listener (Top 3 scores)
