@@ -2,959 +2,1094 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Help Grandma: Winter Rush</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandma's Rescue: Winter Rush</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --warmth-color: #f59e0b; /* Amber */
+            --danger-color: #ef4444; /* Red */
+            --safe-color: #10b981; /* Emerald */
+            --primary-text: #f3f4f6; /* Gray 100 */
+            --bg-dark: #1f2937; /* Gray 800 */
+            --bg-medium: #374151; /* Gray 700 */
+        }
         body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #ddeeff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
-
-        /* Canvas ensures it fills the screen */
-        #gameCanvas {
-            display: block;
-            background-color: #e3f2fd;
-        }
-
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .game-container {
             width: 100%;
-            height: 100%;
-            pointer-events: none;
+            max-width: 900px;
+            background-color: var(--bg-medium);
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            z-index: 10;
+            align-items: center;
         }
-
-        /* HUD */
-        .hud-bar {
+        #gameCanvas {
+            border: 2px solid #4b5563;
+            background-color: #ffffff; /* Snow background */
+            touch-action: none; /* Disable default touch actions */
+        }
+        .button-primary {
+            background-color: var(--safe-color);
+            color: var(--bg-dark);
+            padding: 12px 30px;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .button-primary:hover {
+            background-color: #059669; /* Emerald 600 */
+            transform: translateY(-2px);
+        }
+        .hud {
+            width: 100%;
             display: flex;
             justify-content: space-between;
-            padding: 15px;
-            pointer-events: none;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.85);
-            color: #2c3e50;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            border: 2px solid #bdc3c7;
-            display: flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-size: 14px;
+            padding: 10px 0;
+            margin-bottom: 10px;
         }
-
-        /* Warmth Bar */
-        #warmth-container {
-            width: 100px;
-            height: 15px;
-            background: #333;
-            border-radius: 10px;
+        .warmth-bar-container {
+            width: 150px;
+            height: 20px;
+            background-color: #4b5563;
+            border-radius: 9999px;
             overflow: hidden;
-            border: 2px solid white;
+            border: 1px solid #1f2937;
         }
-        #warmth-fill {
-            width: 100%;
+        #warmth-bar {
             height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #f1c40f);
-            transition: width 0.2s linear;
+            background-color: var(--warmth-color);
+            transition: width 0.3s, background-color 0.3s;
         }
-
-        /* Message Banner */
-        #message-banner {
-            position: absolute;
-            top: 80px;
-            width: 100%;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #d35400;
-            text-shadow: 2px 2px 0px white;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
+        .leaderboard-list li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #4b5563;
         }
-        .show-msg { opacity: 1 !important; }
-
-        /* Screens (Start/Game Over) */
-        .screen {
+        .leaderboard-list li:last-child {
+            border-bottom: none;
+        }
+        /* Mobile Joystick Styles */
+        #joystick-area {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin-top: 20px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        #joystick-area:before {
+            content: "";
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
-            padding: 15px;
-            border-radius: 20px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            max-height: 90vh; 
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            pointer-events: auto;
-            border: 4px solid #3498db;
-            box-sizing: border-box;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        #joystick-head {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transition: background-color 0.1s;
         }
 
-        h1 { margin: 0 0 10px 0; color: #2c3e50; font-size: 24px; }
-        p { color: #555; font-size: 14px; line-height: 1.4; margin: 5px 0; }
-        
-        button {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            box-shadow: 0 4px 0 #1e8449;
-            transition: transform 0.1s;
-            width: 100%; 
+        /* Responsive Layout */
+        @media (max-width: 768px) {
+            .hud {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .hud > div {
+                width: 100%;
+                text-align: center;
+            }
+            #joystick-area {
+                display: block; /* Show joystick on small screens */
+            }
         }
-        button:active { transform: translateY(4px); box-shadow: none; }
-
-        .hidden { display: none !important; }
-
-        /* Icon Canvases in Text */
-        .icon-canvas {
-            vertical-align: middle;
-            margin: 0 5px;
+        @media (min-width: 769px) {
+            #joystick-area {
+                display: none; /* Hide joystick on large screens */
+            }
         }
-
-        .mission-list {
-            background: #f0f8ff;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .mission-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            background: white;
-            padding: 5px 10px;
-            border-radius: 8px;
-        }
-
-        /* Leaderboard */
-        #leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-            text-align: left;
-            font-size: 14px;
-            min-height: 50px;
-            max-height: 120px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 5px;
-        }
-        #leaderboard-list li {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #leaderboard-list li:last-child {
-            border-bottom: none;
-        }
-        .rank-badge {
-            font-weight: bold;
-            color: white;
-            background: #3498db;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-right: 5px;
-        }
-        .rank-badge-1 { background: #f1c40f; color: #333; }
-        .rank-badge-2 { background: #bdc3c7; color: #333; }
-        .rank-badge-3 { background: #c0392b; }
-        
-        #player-name {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            width: calc(100% - 22px);
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-        
-        /* Removed .user-id-display styles */
     </style>
 </head>
 <body>
+    <div class="game-container">
+        <h1 class="text-4xl font-extrabold mb-4 text-warmth-color">Grandma's Rescue: Winter Rush</h1>
 
-    <canvas id="gameCanvas"></canvas>
-
-    <div id="ui-layer">
-        <div class="hud-bar" id="hud">
-            <div class="stat-box">
-                <span>🌡️</span>
-                <div id="warmth-container"><div id="warmth-fill"></div></div>
-            </div>
-            <div class="stat-box">
-                <span>LEVEL <span id="level-val">1</span></span>
-            </div>
-            <div class="stat-box">
-                <span>🏆 <span id="score-val">0</span></span>
+        <div class="hud text-lg font-semibold">
+            <div>Level: <span id="hud-level" class="text-safe-color">1</span></div>
+            <div>Score: <span id="hud-score" class="text-safe-color">0</span></div>
+            <div class="flex items-center space-x-2">
+                <span>Warmth:</span>
+                <div class="warmth-bar-container">
+                    <div id="warmth-bar" style="width: 100%;"></div>
+                </div>
             </div>
         </div>
 
-        <div id="message-banner">Find the Purse!</div>
+        <canvas id="gameCanvas"></canvas>
 
-        <!-- Start Screen --><div id="start-screen" class="screen">
-            <h1>❄️ Winter Rush ❄️</h1>
-            <p>Grandma is freezing! Bring her items to warm her up.</p>
-            
-            <div class="mission-list">
-                <div class="mission-item">
-                    1. Find the Purse <canvas id="icon-purse" width="40" height="40" class="icon-canvas"></canvas> and return it.
-                </div>
-                <div class="mission-item">
-                    2. Return to Grandma <canvas id="icon-grandma" width="40" height="40" class="icon-canvas"></canvas> to level up.
-                </div>
-                <div class="mission-item">
-                    3. Avoid the Grinch <canvas id="icon-grinch" width="40" height="40" class="icon-canvas"></canvas> (They move faster each level).
-                </div>
-                <div class="mission-item">
-                    4. Collect Cocoa <canvas id="icon-cocoa" width="40" height="40" class="icon-canvas"></canvas> to boost Warmth.
-                </div>
-                <div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">
-                    You are the Helper <canvas id="icon-player" width="30" height="30" class="icon-canvas"></canvas>
-                </div>
-            </div>
-            
-            <p style="font-size: 12px; color: #7f8c8d; margin-top:0;">(Drag on screen to move)</p>
-            <button onclick="startGame()">Start Game</button>
+        <!-- Joystick Area for Mobile/Touch -->
+        <div id="joystick-area" class="touch-only">
+            <div id="joystick-head"></div>
         </div>
 
-        <!-- Game Over Screen --><div id="game-over-screen" class="screen hidden">
-            <h1 id="go-title">Game Over</h1>
-            <p id="go-msg">You froze!</p>
-            <p>Final Score: <strong id="final-score">0</strong></p>
-            <p style="font-size: 14px;">Reached Level <span id="final-level">1</span></p>
-            
-            <div id="highscore-section">
-                <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Enter Name to Save Score:</p>
-                <input type="text" id="player-name" placeholder="Your Name" maxlength="10">
-                <button id="save-score-btn" onclick="submitScore()">Save Score</button>
+        <!-- Start/Game Over Overlay -->
+        <div id="game-overlay" class="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center p-8 z-10 transition-opacity duration-500 hidden overflow-auto">
+            <div id="start-screen" class="max-w-md w-full text-center">
+                <h2 class="text-4xl font-extrabold text-warmth-color mb-6">Start Your Rush!</h2>
+                <div id="instructions" class="bg-gray-800 p-6 rounded-lg text-left mb-6 max-h-96 overflow-y-auto">
+                    <h3 class="text-2xl font-bold mb-3 border-b pb-1">Goal:</h3>
+                    <p class="mb-4 text-gray-300">Find the <span class="text-yellow-400 font-bold">Purse</span> and return it to <span class="text-green-400 font-bold">Grandma</span>!</p>
+                    
+                    <h3 class="text-2xl font-bold mb-3 border-b pb-1">Controls:</h3>
+                    <p class="mb-4 text-gray-300">Use **WASD / Arrow Keys** or the **On-Screen Joystick (Touch)** to move.</p>
+
+                    <h3 class="text-2xl font-bold mb-3 border-b pb-1">Hazards & Collectibles:</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-300">
+                        <li class="flex items-center"><canvas id="icon-player" width="20" height="20" class="mr-2"></canvas> You: <span class="text-warmth-color font-semibold">Warmth</span> decays constantly. If it hits 0, you freeze!</li>
+                        <li class="flex items-center"><canvas id="icon-cocoa" width="20" height="20" class="mr-2"></canvas> Cocoa: Collect to restore <span class="text-safe-color">+25 Warmth</span>.</li>
+                        <li class="flex items-center"><canvas id="icon-grinch" width="20" height="20" class="mr-2"></canvas> Grinch: Avoid the Grinch! Collision means Game Over.</li>
+                        <li class="flex items-center"><canvas id="icon-purse" width="20" height="20" class="mr-2"></canvas> Purse: The item you need to find.</li>
+                        <li class="flex items-center"><canvas id="icon-grandma" width="20" height="20" class="mr-2"></canvas> Grandma: Your final destination.</li>
+                    </ul>
+                </div>
+                <button id="start-game-button" class="button-primary">Start Game</button>
             </div>
-            
-            <div style="margin-top: 10px;">
-                <strong>Top 3 Helpers (Leaderboard):</strong>
-                <ul id="leaderboard-list">
-                    <li>Loading...</li>
-                </ul>
+
+            <div id="game-over-screen" class="max-w-md w-full text-center hidden">
+                <h2 class="text-5xl font-extrabold mb-4 text-danger-color">GAME OVER</h2>
+                <p class="text-2xl mb-2">Level Reached: <span id="go-level" class="text-safe-color font-bold">0</span></p>
+                <p class="text-3xl mb-4">Final Score: <span id="go-score" class="text-warmth-color font-bold">0</span></p>
+                
+                <p class="text-sm text-gray-400 mb-4">Auth ID: <span id="go-user-id" class="font-mono text-xs">Loading... (Not used for scoring)</span></p>
+
+                <div id="submission-area" class="bg-gray-800 p-6 rounded-lg mb-6">
+                    <p class="mb-3 text-lg font-semibold">New High Score?</p>
+                    <input type="text" id="player-name-input" placeholder="Enter Your Name (Max 15 Chars)" 
+                           maxlength="15"
+                           class="w-full p-3 mb-4 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-warmth-color focus:border-warmth-color">
+                    
+                    <button id="submit-score-button" class="button-primary w-full" disabled>
+                        Submit Score
+                    </button>
+                    <p id="submission-message" class="text-sm mt-2 text-green-400 hidden">Score Submitted!</p>
+                </div>
+                
+                <div class="bg-gray-800 p-6 rounded-lg mb-6">
+                    <h3 class="text-3xl font-bold mb-4 border-b pb-2 text-warmth-color">Global Top 3</h3>
+                    <ul id="leaderboard-list" class="leaderboard-list space-y-2 text-xl">
+                        <li class="text-gray-400">Loading scores...</li>
+                    </ul>
+                </div>
+
+                <button id="restart-game-button" class="button-primary">Play Again</button>
             </div>
-            
-            <!-- Removed the user-info-display div --><button onclick="startGame()">Try Again</button>
         </div>
     </div>
 
-<script type="module">
-    // --- Firebase Imports ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, addDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Firebase SDK Imports (MUST be type="module") -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Set Firestore logging to debug
-    setLogLevel('Debug');
+        // --- GLOBAL FIREBASE/ENVIRONMENT VARIABLES ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    // ====================================================================
-    // 📢 FIREBASE CONFIGURATION (USING USER'S VALUES)
-    // ====================================================================
-    const PUBLIC_FIREBASE_CONFIG = {
-        apiKey: "AIzaSyBMlyMbSEW7kJrh0Xjv3DS59u2fvyhIL9o",
-        authDomain: "grandmas-christmas-crisis.firebaseapp.com",
-        projectId: "grandmas-christmas-crisis",
-        storageBucket: "grandmas-christmas-crisis.firebasestorage.app",
-        messagingSenderId: "729701269664",
-        appId: "1:729701269664:web:f4f8dd9b04d7fd431709c5",
-        measurementId: "G-1KZDG4BXPS" // Not strictly needed for Firestore, but included for completeness.
-    };
-    
-    // Define a static app ID for the leaderboard path
-    // This allows the public security rules (artifacts/{appId}/public/data/...) to work.
-    const appId = "winter-rush-leaderboard"; 
-    // ====================================================================
+        // --- FIREBASE STATE ---
+        let app, db, auth;
+        let currentUserId = null;
+        let isAuthReady = false;
 
-    let app, db, auth;
-    let userId = ''; 
+        // --- GAME CONSTANTS ---
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 500;
+        const PLAYER_SPEED_BASE = 3;
+        const PLAYER_SIZE = 20;
+        const GRINCH_SIZE = 20;
+        const ITEM_SIZE = 15;
+        const WARMTH_DECAY_BASE = 0.5; // Warmth per second at Level 1
+        const GRINCH_SPEED_BASE = 1.5;
 
-    // --- Firebase Initialization and Authentication ---
-    async function initFirebase() {
-        // Use the public config for initialization
-        try {
-            app = initializeApp(PUBLIC_FIREBASE_CONFIG);
-            auth = getAuth(app);
-            db = getFirestore(app);
+        // --- DOM ELEMENTS ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const hudLevel = document.getElementById('hud-level');
+        const hudScore = document.getElementById('hud-score');
+        const warmthBar = document.getElementById('warmth-bar');
+        const overlay = document.getElementById('game-overlay');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const goLevel = document.getElementById('go-level');
+        const goScore = document.getElementById('go-score');
+        const goUserId = document.getElementById('go-user-id');
+        const playerNameInput = document.getElementById('player-name-input');
+        const submitScoreButton = document.getElementById('submit-score-button');
+        const submissionMessage = document.getElementById('submission-message');
+        const leaderboardList = document.getElementById('leaderboard-list');
 
-            // Use anonymous sign-in for all public users
-            await signInAnonymously(auth);
+        // --- GAME STATE ---
+        let gameState = 'START';
+        let lastTime = 0;
+        let score = 0;
+        let level = 1;
+        let player = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, dx: 0, dy: 0, warmth: 100, hasPurse: false };
+        let grandma = { x: 50, y: 50, size: 30 };
+        let purse = {};
+        let cocoa = [];
+        let grinches = [];
+        let trees = [];
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    console.log("User authenticated anonymously:", userId);
-                    setupLeaderboardListener();
+        // --- INPUT STATE (Keyboard and Joystick) ---
+        const keys = {};
+        let joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, radius: 75 };
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickHead = document.getElementById('joystick-head');
+
+        // Set up canvas dimensions
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+
+
+        // --- FIREBASE AND LEADERBOARD FUNCTIONS ---
+
+        setLogLevel('debug');
+
+        /**
+         * Gets the Firestore collection reference for the public leaderboard.
+         * Public path: /artifacts/{appId}/public/data/leaderboard
+         */
+        function getLeaderboardRef() {
+            return collection(db, `artifacts/${appId}/public/data/leaderboard`);
+        }
+
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        goUserId.textContent = currentUserId;
+                        isAuthReady = true;
+                        setupLeaderboardListener();
+                        // Enable submission button if user is authenticated
+                        submitScoreButton.disabled = false;
+                        submitScoreButton.textContent = "Submit High Score";
+                    } else {
+                        // Sign in anonymously if no token is available or user is signed out
+                        await signInAnonymously(auth);
+                    }
+                });
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
                 } else {
-                    console.log("No user signed in.");
+                    // Start anonymous sign-in flow
+                    await signInAnonymously(auth);
                 }
-            });
+
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                goUserId.textContent = 'Auth Error.';
+            }
+        }
+
+        /**
+         * Sets up the real-time listener for the public leaderboard.
+         */
+        function setupLeaderboardListener() {
+            if (!isAuthReady) return; 
+
+            const leaderboardRef = getLeaderboardRef();
             
-        } catch(e) {
-            console.error("Firebase initialization or sign-in failed. Error:", e);
-            document.getElementById('leaderboard-list').innerHTML = "<li>Error: Leaderboard unavailable. Check console.</li>";
-        }
-    }
-    
-    // Leaderboard Collection Path: /artifacts/{appId}/public/data/leaderboard
-    const LEADERBOARD_PATH = `artifacts/${appId}/public/data/leaderboard`;
+            // Listen for changes to the leaderboard collection
+            onSnapshot(leaderboardRef, (snapshot) => {
+                let scores = [];
+                snapshot.forEach(doc => {
+                    scores.push(doc.data());
+                });
 
-    // Function to set up the real-time leaderboard listener (Top 3 scores)
-    function setupLeaderboardListener() {
-        if (!db) return;
+                // Sort by score descending, then by timestamp ascending (for ties)
+                scores.sort((a, b) => {
+                    if (a.score !== b.score) {
+                        return b.score - a.score;
+                    }
+                    // Handle timestamp: if timestamp is null (still saving), push it down
+                    const timeA = a.timestamp ? a.timestamp.toMillis() : Infinity;
+                    const timeB = b.timestamp ? b.timestamp.toMillis() : Infinity;
+                    return timeA - timeB; 
+                });
 
-        const leaderboardRef = collection(db, LEADERBOARD_PATH);
-        // NOTE: We rely on the platform to handle the required index for orderBy
-        const q = query(leaderboardRef, orderBy("score", "desc"), limit(3)); 
+                // Display only the top 3 scores as per prompt
+                renderLeaderboard(scores.slice(0, 3));
 
-        onSnapshot(q, (snapshot) => {
-            const scores = [];
-            snapshot.forEach((doc) => {
-                scores.push(doc.data());
+            }, (error) => {
+                console.error("Error fetching leaderboard:", error);
+                leaderboardList.innerHTML = '<li class="text-danger-color">Could not load leaderboard.</li>';
             });
-            renderLeaderboard(scores);
-        }, (error) => {
-            console.error("Failed to listen to leaderboard changes:", error);
-            renderLeaderboard([]);
-        });
-    }
-
-    // Function to submit the final score (made global for button click)
-    window.submitScore = async function() {
-        if (!db || !userId) {
-            console.error("Firestore not initialized or user not authenticated.");
-            alertBox("Cannot save score: Not authenticated or Firestore unavailable.");
-            return;
         }
 
-        const name = document.getElementById('player-name').value.trim() || "Helper";
-        const score = Math.floor(state.score);
-        const submitBtn = document.getElementById('save-score-btn');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Saving...";
+        /**
+         * Renders the leaderboard list in the UI.
+         */
+        function renderLeaderboard(scores) {
+            leaderboardList.innerHTML = ''; 
 
-        const leaderboardRef = collection(db, LEADERBOARD_PATH);
+            if (scores.length === 0) {
+                leaderboardList.innerHTML = '<li class="text-gray-400">No scores posted yet.</li>';
+                return;
+            }
 
-        try {
-            await addDoc(leaderboardRef, {
-                name: name,
-                score: score,
-                userId: userId, 
-                timestamp: Date.now()
+            scores.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center text-lg font-semibold';
+                
+                const nameColor = index === 0 ? 'text-yellow-400' : 'text-white';
+
+                li.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl w-6 text-right">${index + 1}.</span>
+                        <span class="${nameColor} font-extrabold">${item.name}</span>
+                    </div>
+                    <span class="text-warmth-color text-2xl font-bold">${item.score}</span>
+                `;
+                leaderboardList.appendChild(li);
             });
-            console.log(`New score saved successfully: ${score} by ${name} (User ID: ${userId})`); 
+        }
+
+        /**
+         * Submits the final score to Firestore. The document ID is now the player's name (sanitized).
+         */
+        async function submitScore() {
+            // Sanitize the player name and use it as the unique key
+            const playerName = playerNameInput.value.trim().substring(0, 15);
+            const sanitizedName = playerName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(); // Use a safe key for Firestore
             
-            submitBtn.innerText = "Score Saved!";
-            document.getElementById('highscore-section').style.display = 'none'; 
-
-        } catch (e) {
-            console.error("Score submission failed: ", e);
-            alertBox("Score submission failed. Check console for details.");
-            submitBtn.innerText = "Save Score (Failed)";
-        } finally {
-            submitBtn.disabled = false;
-        }
-    }
-
-    function renderLeaderboard(scores) {
-        const list = document.getElementById('leaderboard-list');
-        list.innerHTML = "";
-        
-        if(scores.length === 0) {
-            list.innerHTML = "<li>No scores recorded yet.</li>";
-            return;
-        }
-        
-        scores.sort((a, b) => b.score - a.score);
-
-        scores.forEach((s, index) => {
-            const li = document.createElement('li');
-            const rank = index + 1;
-            li.innerHTML = `
-                <span class="rank-badge rank-badge-${rank}">${rank}</span>
-                <span>${s.name}</span>
-                <strong>${s.score}</strong>
-            `;
-            list.appendChild(li);
-        });
-    }
-
-    // Custom Alert/Message Box function
-    function alertBox(message) {
-        const modal = document.createElement('div');
-        modal.className = 'screen';
-        modal.style.zIndex = 1000;
-        modal.innerHTML = `
-            <h2>Attention</h2>
-            <p>${message}</p>
-            <button onclick="this.parentNode.remove()">Close</button>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    // --- Canvas Setup ---
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    let WIDTH, HEIGHT;
-    
-    function resize() {
-        WIDTH = window.innerWidth;
-        HEIGHT = window.innerHeight;
-        canvas.width = WIDTH;
-        canvas.height = HEIGHT;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // --- Config ---
-    const BASE_CONFIG = {
-        playerSpeed: 5,
-        grinchBaseSpeed: 0.5,
-        baseWarmthDecay: 0.08,
-        cocoaHeal: 25
-    };
-
-    let state = {
-        playing: false,
-        level: 1,
-        score: 0,
-        warmth: 100,
-        hasPurse: false,
-        frame: 0,
-        joystick: { active: false, originX: 0, originY: 0, currX: 0, currY: 0, angle: 0, force: 0 }
-    };
-
-    // --- Entities ---
-    let player = { x: 0, y: 0, r: 18, dir: 1 };
-    let grandma = { x: 60, y: 60 };
-    let purse = { x: 0, y: 0 };
-    let trees = [];
-    let grinches = [];
-    let cocoas = [];
-    let snow = [];
-
-    // --- Input (Touch & Keyboard) ---
-    const handleTouchStart = (e) => {
-        if(!state.playing) return;
-        const touch = e.changedTouches[0];
-        state.joystick.active = true;
-        state.joystick.originX = touch.clientX;
-        state.joystick.originY = touch.clientY;
-        state.joystick.currX = touch.clientX;
-        state.joystick.currY = touch.clientY;
-    };
-
-    const handleTouchMove = (e) => {
-        if(!state.joystick.active) return;
-        e.preventDefault();
-        const touch = e.changedTouches[0];
-        state.joystick.currX = touch.clientX;
-        state.joystick.currY = touch.clientY;
-
-        const dx = state.joystick.currX - state.joystick.originX;
-        const dy = state.joystick.currY - state.joystick.originY;
-        state.joystick.angle = Math.atan2(dy, dx);
-        state.joystick.force = Math.min(Math.hypot(dx, dy), 50) / 50;
-    };
-
-    const handleTouchEnd = () => {
-        state.joystick.active = false;
-    };
-
-    canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
-    canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
-    canvas.addEventListener('touchend', handleTouchEnd);
-    
-    const keys = {};
-    window.addEventListener('keydown', e => keys[e.code] = true);
-    window.addEventListener('keyup', e => keys[e.code] = false);
-
-    // --- Game Logic ---
-    
-    // **FIX: Expose startGame to the global scope so the HTML button can access it.**
-    window.startGame = function() {
-        state.score = 0;
-        state.level = 1;
-        startLevel(1);
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over-screen').classList.add('hidden');
-        document.getElementById('hud').classList.remove('hidden');
-        gameLoop();
-    }
-
-    function startLevel(levelNum) {
-        state.playing = true;
-        state.level = levelNum;
-        state.warmth = 100;
-        state.hasPurse = false;
-        state.joystick.active = false;
-
-        document.getElementById('level-val').innerText = state.level;
-        document.getElementById('score-val').innerText = state.score;
-        showMsg(levelNum === 1 ? "Find the Purse!" : `Level ${levelNum}!`);
-
-        player.x = WIDTH / 2;
-        player.y = HEIGHT / 2;
-        grandma.x = 80;
-        grandma.y = 80;
-
-        // Place purse away from the starting area
-        do {
-            purse.x = Math.random() * (WIDTH - 100) + 50;
-            purse.y = Math.random() * (HEIGHT - 100) + 50;
-        } while (Math.hypot(purse.x - 80, purse.y - 80) < 300); 
-
-        // Generate Trees
-        trees = [];
-        let treeCount = 15 + levelNum * 2;
-        for(let i=0; i<treeCount; i++) {
-            trees.push({
-                x: Math.random() * WIDTH,
-                y: Math.random() * HEIGHT,
-                r: 30 + Math.random() * 15
-            });
-        }
-
-        // Generate Grinches
-        grinches = [];
-        let grinchCount = 1 + Math.floor(levelNum / 2); 
-        let grinchSpeed = BASE_CONFIG.grinchBaseSpeed + (levelNum * 0.3);
-
-        for(let i=0; i<grinchCount; i++) {
-            let gx, gy;
-            do {
-                gx = Math.random() * WIDTH;
-                gy = Math.random() * HEIGHT;
-            } while (Math.hypot(gx - player.x, gy - player.y) < 300); // Spawn away from player
-
-            grinches.push({
-                x: gx,
-                y: gy,
-                vx: Math.random() < 0.5 ? 1 : -1,
-                vy: Math.random() < 0.5 ? 1 : -1,
-                speed: grinchSpeed
-            });
-        }
-
-        // Generate Cocoas
-        cocoas = [];
-        let cocoaCount = Math.max(1, 3 - Math.floor(levelNum / 2)); 
-        for(let i=0; i<cocoaCount; i++) {
-            cocoas.push({
-                x: Math.random() * (WIDTH - 40),
-                y: Math.random() * (HEIGHT - 40),
-                active: true,
-                floatOffset: Math.random() * Math.PI * 2
-            });
-        }
-
-        // Initialize Snow
-        snow = Array.from({length: 80}, () => ({
-            x: Math.random() * WIDTH,
-            y: Math.random() * HEIGHT,
-            r: Math.random() * 2 + 1,
-            sp: Math.random() * 2 + 1
-        }));
-    }
-
-    function showMsg(text) {
-        const el = document.getElementById('message-banner');
-        el.innerText = text;
-        el.classList.add('show-msg');
-        setTimeout(() => el.classList.remove('show-msg'), 2500);
-    }
-
-    function update() {
-        if(!state.playing) return;
-
-        let vx = 0, vy = 0;
-        // Handle Joystick input
-        if (state.joystick.active) {
-            vx = Math.cos(state.joystick.angle) * BASE_CONFIG.playerSpeed * state.joystick.force;
-            vy = Math.sin(state.joystick.angle) * BASE_CONFIG.playerSpeed * state.joystick.force;
-        } else {
-            // Handle Keyboard input
-            if (keys['ArrowUp'] || keys['KeyW']) vy = -BASE_CONFIG.playerSpeed;
-            if (keys['ArrowDown'] || keys['KeyS']) vy = BASE_CONFIG.playerSpeed;
-            if (keys['ArrowLeft'] || keys['KeyA']) vx = -BASE_CONFIG.playerSpeed;
-            if (keys['ArrowRight'] || keys['KeyD']) vx = BASE_CONFIG.playerSpeed;
-        }
-
-        if (vx !== 0) player.dir = vx > 0 ? 1 : -1;
-
-        let nextX = player.x + vx;
-        let nextY = player.y + vy;
-
-        // Keep player in bounds
-        nextX = Math.max(20, Math.min(WIDTH - 20, nextX));
-        nextY = Math.max(20, Math.min(HEIGHT - 20, nextY));
-
-        // Collision with trees (simple push-back)
-        trees.forEach(t => {
-            let dist = Math.hypot(nextX - t.x, nextY - t.y);
-            const min_dist = 15 + t.r * 0.4; // Player radius + small tree radius
-            if (dist < min_dist) { 
-                const angle = Math.atan2(nextY - t.y, nextX - t.x);
-                nextX = t.x + Math.cos(angle) * min_dist;
-                nextY = t.y + Math.sin(angle) * min_dist;
-            }
-        });
-
-        player.x = nextX;
-        player.y = nextY;
-
-        // Warmth Decay
-        let decay = BASE_CONFIG.baseWarmthDecay + (state.level * 0.02);
-        state.warmth -= decay;
-        if (state.warmth <= 0) endGame("You Froze!");
-        
-        // Update Warmth HUD
-        const bar = document.getElementById('warmth-fill');
-        bar.style.width = Math.max(0, state.warmth) + "%";
-        bar.style.background = state.warmth < 30 ? "red" : "linear-gradient(90deg, #e74c3c, #f1c40f)";
-
-        // Cocoa Collection
-        cocoas.forEach(c => {
-            if(c.active && Math.hypot(player.x - c.x, player.y - c.y) < 35) {
-                c.active = false;
-                state.warmth = Math.min(100, state.warmth + BASE_CONFIG.cocoaHeal);
-                state.score += 5;
-                showMsg("+25 Warmth!");
-            }
-        });
-
-        // Grinch Movement and Collision
-        grinches.forEach(g => {
-            // Simple random patrol with occasional bounce
-            if(state.frame % 120 === 0) {
-                 if (Math.random() < 0.5) g.vx *= -1;
-                 else g.vy *= -1;
+            if (!isAuthReady || !sanitizedName || playerName.length < 2) {
+                // Use a visual modal message instead of alert
+                submissionMessage.textContent = "Error: Name required (2+ chars) or auth failed.";
+                submissionMessage.classList.remove('text-green-400');
+                submissionMessage.classList.add('text-danger-color');
+                submissionMessage.classList.remove('hidden');
+                return;
             }
 
-            g.x += g.vx * g.speed;
-            g.y += g.vy * g.speed;
+            submitScoreButton.disabled = true;
+            submitScoreButton.textContent = "Saving...";
+            submissionMessage.classList.add('hidden');
+
+            try {
+                // Doc ID is now the sanitized Player Name
+                const docRef = doc(getLeaderboardRef(), sanitizedName);
+                const docSnap = await getDoc(docRef);
+
+                let isNewHighScore = true;
+                if (docSnap.exists()) {
+                    const existingScore = docSnap.data().score || 0;
+                    if (score <= existingScore) {
+                        isNewHighScore = false;
+                    }
+                }
+
+                if (isNewHighScore) {
+                    const scoreData = {
+                        // Save the display name, but use the sanitized name for the Document ID
+                        name: playerName, 
+                        score: score,
+                        timestamp: serverTimestamp(),
+                        userId: currentUserId, // Keep this for reference/security but not as the primary key
+                        levelReached: level,
+                    };
+
+                    await setDoc(docRef, scoreData);
+                    
+                    submissionMessage.textContent = `New High Score Saved for ${playerName}!`;
+                    submissionMessage.classList.remove('hidden');
+                    submissionMessage.classList.remove('text-danger-color');
+                    submissionMessage.classList.add('text-green-400');
+                    
+                } else {
+                    submissionMessage.textContent = `Score (${score}) is not a new high score for ${playerName}.`;
+                    submissionMessage.classList.remove('hidden');
+                    submissionMessage.classList.remove('text-green-400');
+                    submissionMessage.classList.add('text-danger-color');
+                }
+                
+            } catch (e) {
+                console.error("Error submitting score:", e);
+                submissionMessage.textContent = "Submission Failed. See console.";
+                submissionMessage.classList.remove('hidden');
+                submissionMessage.classList.remove('text-green-400');
+                submissionMessage.classList.add('text-danger-color');
+            } finally {
+                submitScoreButton.disabled = false;
+                submitScoreButton.textContent = "Submit High Score";
+            }
+        }
+
+
+        // --- GAME LOGIC FUNCTIONS ---
+
+        /**
+         * Resets the game state for a new level or start.
+         */
+        function resetGame(newLevel = 1) {
+            level = newLevel;
+            score = 0;
+            player.warmth = 100;
+            player.hasPurse = false;
+            player.x = CANVAS_WIDTH / 2;
+            player.y = CANVAS_HEIGHT / 2;
+            player.dx = 0;
+            player.dy = 0;
             
-            // Bounce off walls
-            if(g.x < 20 || g.x > WIDTH - 20) g.vx *= -1;
-            if(g.y < 20 || g.y > HEIGHT - 20) g.vy *= -1;
+            // Clear entities
+            cocoa = [];
+            grinches = [];
+            trees = [];
             
-            // Collision with player
-            if(Math.hypot(player.x - g.x, player.y - g.y) < 30) {
-                endGame("The Grinch stole your coat!");
+            initializeLevel(level);
+        }
+
+        /**
+         * Initializes entities based on the current level.
+         */
+        function initializeLevel(lvl) {
+            // Level complexity adjustments
+            const numGrinches = lvl;
+            const numCocoa = 5 + lvl * 2;
+            const numTrees = 20 + lvl * 5;
+            
+            // 1. Set Grandma position (static)
+            grandma.x = 50;
+            grandma.y = 50;
+
+            // 2. Set Purse position (opposite corner, hidden)
+            purse.x = CANVAS_WIDTH - 50;
+            purse.y = CANVAS_HEIGHT - 50;
+            purse.found = false;
+
+            // 3. Grinches
+            for (let i = 0; i < numGrinches; i++) {
+                grinches.push(createRandomEntity(GRINCH_SIZE, GRINCH_SPEED_BASE + lvl * 0.5));
             }
-        });
 
-        // Purse and Goal Check
-        if (!state.hasPurse) {
-            if (Math.hypot(player.x - purse.x, player.y - purse.y) < 30) {
-                state.hasPurse = true;
-                showMsg("Return to Grandma!");
-                state.score += 20;
+            // 4. Cocoa
+            for (let i = 0; i < numCocoa; i++) {
+                cocoa.push(createRandomEntity(ITEM_SIZE, 0));
             }
-        } else {
-            // Level completion
-            if (Math.hypot(player.x - grandma.x, player.y - grandma.y) < 60) {
-                let levelBonus = 30 * state.level;
-                let warmthBonus = Math.floor(state.warmth * 0.5);
-                state.score += levelBonus + warmthBonus;
-                showMsg(`Level Complete! +${levelBonus} Bonus!`);
-                startLevel(state.level + 1);
+
+            // 5. Trees (static obstacles)
+            for (let i = 0; i < numTrees; i++) {
+                trees.push(createRandomEntity(10, 0));
             }
         }
 
-        document.getElementById('score-val').innerText = Math.floor(state.score);
-        state.frame++;
+        /**
+         * Creates an entity at a random, safe location.
+         */
+        function createRandomEntity(size, speed) {
+            let x, y, safe = false;
+            const padding = 50;
+            const minDistanceToPlayer = 100;
 
-        // Snow animation
-        snow.forEach(s => {
-            s.y += s.sp;
-            s.x += Math.sin(s.y * 0.01) * 0.5; // Slight wind effect
-            if(s.y > HEIGHT) s.y = -5;
-        });
-    }
+            while (!safe) {
+                x = Math.random() * (CANVAS_WIDTH - size * 2) + size;
+                y = Math.random() * (CANVAS_HEIGHT - size * 2) + size;
 
-    // --- Drawing Functions ---
-
-    function drawGrandma(ctx, x, y) {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.2)";
-        ctx.beginPath(); ctx.ellipse(x, y+25, 20, 10, 0, 0, Math.PI*2); ctx.fill(); 
-        
-        ctx.fillStyle = "#8e44ad"; 
-        ctx.beginPath(); ctx.moveTo(x, y - 20); ctx.lineTo(x + 25, y + 30); ctx.lineTo(x - 25, y + 30); ctx.fill();
-        
-        ctx.fillStyle = "#f1c40f"; 
-        ctx.beginPath(); ctx.arc(x, y - 20, 15, 0, Math.PI*2); ctx.fill();
-        
-        ctx.fillStyle = "#bdc3c7"; 
-        ctx.beginPath(); ctx.arc(x, y - 32, 10, 0, Math.PI*2); ctx.fill();
-        
-        ctx.strokeStyle = "#333"; ctx.lineWidth = 2; 
-        ctx.beginPath(); ctx.arc(x - 5, y - 20, 4, 0, Math.PI*2);
-        ctx.moveTo(x - 1, y - 20); ctx.lineTo(x + 1, y - 20);
-        ctx.arc(x + 5, y - 20, 4, 0, Math.PI*2); ctx.stroke();
-
-        ctx.beginPath(); ctx.arc(x, y-15, 5, 0, Math.PI, false); ctx.stroke(); 
-        ctx.restore();
-    }
-
-    function drawPlayer(ctx, x, y, dir = 1) {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.2)";
-        ctx.beginPath(); ctx.ellipse(x, y+20, 15, 5, 0, 0, Math.PI*2); ctx.fill(); 
-
-        ctx.fillStyle = "#3498db"; 
-        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); ctx.fill();
-
-        ctx.fillStyle = "#e74c3c"; 
-        ctx.beginPath(); ctx.arc(x, y - 5, 16, Math.PI, 0); ctx.fill();
-        ctx.fillStyle = "white"; 
-        ctx.beginPath(); ctx.arc(x, y - 22, 5, 0, Math.PI*2); ctx.fill();
-
-        ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 6; 
-        ctx.beginPath(); ctx.moveTo(x - 10, y + 8); ctx.quadraticCurveTo(x, y + 15, x + 10, y + 8); ctx.stroke();
-        
-        const sway = Math.sin((state.frame||0) * 0.2) * 5;
-        ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(x - 8, y + 8); ctx.lineTo(x - 8 + sway, y + 20); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x + 8, y + 8); ctx.lineTo(x + 8 - sway, y + 20); ctx.stroke();
-
-
-        ctx.fillStyle = "white"; 
-        const lookDir = dir * 4;
-        ctx.beginPath(); ctx.arc(x - 4 + lookDir, y - 2, 4, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 4 + lookDir, y - 2, 4, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "black"; 
-        ctx.beginPath(); ctx.arc(x - 4 + lookDir, y - 2, 1.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 4 + lookDir, y - 2, 1.5, 0, Math.PI*2); ctx.fill();
-        ctx.restore();
-    }
-
-    function drawGrinch(ctx, x, y) {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.2)";
-        ctx.beginPath(); ctx.ellipse(x, y+20, 15, 5, 0, 0, Math.PI*2); ctx.fill();
-
-        ctx.fillStyle = "#27ae60"; 
-        ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill();
-        
-        ctx.fillStyle = "#f1c40f"; 
-        ctx.beginPath(); ctx.ellipse(x - 6, y - 2, 5, 8, -0.2, 0, Math.PI*2);
-        ctx.ellipse(x + 6, y - 2, 5, 8, 0.2, 0, Math.PI*2); ctx.fill();
-        
-        ctx.fillStyle = "black"; 
-        ctx.beginPath(); ctx.arc(x - 6, y - 2, 2, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 6, y - 2, 2, 0, Math.PI*2); ctx.fill();
-
-        ctx.strokeStyle = "black"; ctx.lineWidth = 2; 
-        ctx.beginPath(); ctx.moveTo(x - 12, y - 10); ctx.lineTo(x - 2, y - 4);
-        ctx.moveTo(x + 12, y - 10); ctx.lineTo(x + 2, y - 4); ctx.stroke();
-
-        ctx.beginPath(); ctx.arc(x, y + 8, 8, Math.PI, 0); ctx.stroke(); 
-        ctx.restore();
-    }
-
-    function drawTree(ctx, x, y, r) {
-        ctx.save();
-        ctx.fillStyle = "#795548"; 
-        ctx.fillRect(x - r/6, y, r/3, r/2);
-        ctx.fillStyle = "#2ecc71"; 
-        for(let i=0; i<3; i++) {
-            let size = r - (i*5);
-            let yPos = y - (i * size * 0.6);
-            ctx.beginPath(); ctx.moveTo(x, yPos - size); ctx.lineTo(x + size, yPos + size*0.5); ctx.lineTo(x - size, yPos + size*0.5); ctx.fill();
-        }
-        ctx.fillStyle = "white"; 
-        ctx.beginPath(); ctx.moveTo(x, y - r * 2.8); ctx.lineTo(x + 10, y - r * 2.4); ctx.lineTo(x - 10, y - r * 2.4); ctx.fill();
-        ctx.restore();
-    }
-
-    function drawPurse(ctx, x, y) {
-        ctx.save();
-        ctx.fillStyle = "#f39c12"; 
-        ctx.fillRect(x - 12, y - 10, 24, 20);
-        ctx.fillStyle = "#f1c40f"; 
-        ctx.beginPath(); ctx.arc(x, y - 10, 4, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = "#f39c12"; ctx.lineWidth = 3; 
-        ctx.beginPath(); ctx.arc(x, y - 10, 10, Math.PI, 0); ctx.stroke();
-        
-        // Sparkle effect
-        if ((state.frame||0) % 30 < 15) {
-            ctx.fillStyle = "white"; ctx.font = "16px Arial"; ctx.fillText("✨", x + 10, y - 15);
-        }
-        ctx.restore();
-    }
-
-    function drawCocoa(ctx, x, y) {
-        ctx.save();
-        ctx.fillStyle = "#795548"; ctx.fillRect(x - 10, y, 20, 20); // Mug
-        ctx.fillStyle = "#c0392b"; ctx.fillRect(x - 10, y, 20, 5); // Rim
-        ctx.strokeStyle = "#795548"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(x + 10, y + 10, 6, 1.5*Math.PI, 0.5*Math.PI); ctx.stroke(); // Handle
-        ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2; // Steam
-        let offset = Math.sin((state.frame||0) * 0.1) * 3;
-        ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x - 5 + offset, y - 15);
-        ctx.moveTo(x + 5, y - 5); ctx.lineTo(x + 5 - offset, y - 15); ctx.stroke();
-        ctx.restore();
-    }
-
-    function draw(dtCtx = ctx) {
-        // Clear background
-        dtCtx.fillStyle = "#e3f2fd"; 
-        dtCtx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        // Ground snow effect
-        dtCtx.fillStyle = "white";
-        dtCtx.beginPath(); dtCtx.ellipse(WIDTH/2, HEIGHT + 300, WIDTH, 400, 0, 0, Math.PI*2); dtCtx.fill();
-
-        // Collect all objects for z-ordering (drawing based on Y position)
-        const objects = [
-            ...trees.map(t => ({type:'tree', ...t, z: t.y})),
-            ...grinches.map(g => ({type:'grinch', ...g, z: g.y})),
-            ...cocoas.filter(c => c.active).map(c => ({type:'cocoa', ...c, z: c.y})),
-            {type:'grandma', ...grandma, z: grandma.y + 20}, // Offset for shadow
-            {type:'player', ...player, z: player.y + 15} // Offset for shadow
-        ];
-
-        if (!state.hasPurse) {
-            objects.push({type:'purse', ...purse, z: purse.y});
-        }
-
-        objects.sort((a, b) => a.z - b.z);
-
-        // Draw entities
-        objects.forEach(obj => {
-            if(obj.type === 'tree') drawTree(dtCtx, obj.x, obj.y, obj.r);
-            else if(obj.type === 'grinch') drawGrinch(dtCtx, obj.x, obj.y);
-            else if(obj.type === 'cocoa') drawCocoa(dtCtx, obj.x, obj.y + Math.sin((state.frame||0)*0.05 + obj.floatOffset)*5);
-            else if(obj.type === 'grandma') drawGrandma(dtCtx, grandma.x, grandma.y);
-            else if(obj.type === 'player') {
-                drawPlayer(dtCtx, player.x, player.y, player.dir);
-                if(state.hasPurse) drawPurse(dtCtx, player.x - 5, player.y + 5); 
+                // Check distance from player start position
+                const dist = Math.hypot(x - player.x, y - player.y);
+                if (dist > minDistanceToPlayer) {
+                    safe = true;
+                }
             }
-            else if(obj.type === 'purse') drawPurse(dtCtx, obj.x, obj.y);
-        });
-
-        // Draw falling snow
-        dtCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        snow.forEach(s => {
-            dtCtx.beginPath(); dtCtx.arc(s.x, s.y, s.r, 0, Math.PI*2); dtCtx.fill();
-        });
-
-        // Draw Joystick (if active)
-        if(state.joystick.active) {
-            dtCtx.beginPath(); dtCtx.strokeStyle = "rgba(0,0,0,0.1)"; dtCtx.lineWidth = 3;
-            dtCtx.arc(state.joystick.originX, state.joystick.originY, 50, 0, Math.PI*2); dtCtx.stroke();
-            dtCtx.beginPath(); dtCtx.fillStyle = "rgba(52, 152, 219, 0.5)";
-            dtCtx.arc(state.joystick.currX, state.joystick.currY, 25, 0, Math.PI*2); dtCtx.fill();
+            
+            return {
+                x: x, y: y, size: size,
+                speed: speed,
+                dx: (Math.random() - 0.5) * speed,
+                dy: (Math.random() - 0.5) * speed,
+                collected: false
+            };
         }
-    }
 
-    function gameLoop() {
-        if(state.playing) {
-            update();
-            draw();
+        /**
+         * Handles the level completion logic.
+         */
+        function completeLevel() {
+            score += level * 100;
+            level++;
+            // Move to the next level's state
+            initializeLevel(level);
+            player.hasPurse = false; // Reset purse status
+            showLevelUpMessage();
+        }
+
+        /**
+         * Draws the level up message temporarily.
+         */
+        function showLevelUpMessage() {
+            // This is a temporary visual effect. The game state remains 'PLAYING'.
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '60px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Level ${level-1} Complete!`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
+            ctx.font = '30px Inter';
+            ctx.fillText(`Starting Level ${level}...`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+            ctx.restore();
+            
+            // Resume drawing after 2 seconds
+            setTimeout(() => {
+                // The main game loop will naturally redraw the scene
+            }, 2000);
+        }
+
+        /**
+         * Main game loop, runs approximately 60 times per second.
+         */
+        function gameLoop(timestamp) {
+            const deltaTime = (timestamp - lastTime) / 1000; // seconds
+            lastTime = timestamp;
+
+            if (gameState === 'PLAYING') {
+                update(deltaTime);
+                draw();
+            } else if (gameState === 'START') {
+                drawStartScreen();
+            } else if (gameState === 'GAME_OVER') {
+                // Draw final frame and then wait
+                draw(); 
+            }
+
             requestAnimationFrame(gameLoop);
         }
-    }
 
-    // --- UI Icons Logic ---
-    function renderIcons() {
-        // Draw Purse Icon
-        const pCanvas = document.getElementById('icon-purse');
-        if (pCanvas) {
-            const pCtx = pCanvas.getContext('2d');
-            pCtx.translate(20, 25); drawPurse(pCtx, 0, 0);
+        /**
+         * Updates game logic based on delta time.
+         */
+        function update(deltaTime) {
+            // --- 1. Warmth Decay ---
+            const warmthDecayRate = WARMTH_DECAY_BASE * level;
+            player.warmth -= warmthDecayRate * deltaTime;
+            if (player.warmth < 0) {
+                player.warmth = 0;
+                setGameState('GAME_OVER');
+                return;
+            }
+            player.warmth = Math.min(100, player.warmth); // Cap at 100
+
+            // --- 2. Player Movement ---
+            let moveX = keys['ArrowRight'] || keys['d'] || 0;
+            let moveY = keys['ArrowDown'] || keys['s'] || 0;
+            
+            // Check for left/up/joystick input
+            if (keys['ArrowLeft'] || keys['a']) moveX = -1;
+            if (keys['ArrowUp'] || keys['w']) moveY = -1;
+
+            if (joystick.active) {
+                moveX = joystick.dx;
+                moveY = joystick.dy;
+            }
+            
+            // Normalize diagonal speed
+            if (moveX !== 0 && moveY !== 0) {
+                const magnitude = Math.hypot(moveX, moveY);
+                moveX /= magnitude;
+                moveY /= magnitude;
+            }
+
+            const playerSpeed = PLAYER_SPEED_BASE;
+            player.dx = moveX * playerSpeed;
+            player.dy = moveY * playerSpeed;
+
+            player.x += player.dx;
+            player.y += player.dy;
+
+            // Keep player within bounds
+            player.x = Math.max(PLAYER_SIZE / 2, Math.min(CANVAS_WIDTH - PLAYER_SIZE / 2, player.x));
+            player.y = Math.max(PLAYER_SIZE / 2, Math.min(CANVAS_HEIGHT - PLAYER_SIZE / 2, player.y));
+
+            // --- 3. Grinch Movement and Collision ---
+            const grinchSpeed = GRINCH_SPEED_BASE + level * 0.5;
+
+            grinches.forEach(g => {
+                // Simple random patrol with edge bounce
+                if (Math.random() < 0.01) { // 1% chance to change direction
+                    g.dx = (Math.random() - 0.5) * grinchSpeed;
+                    g.dy = (Math.random() - 0.5) * grinchSpeed;
+                }
+                
+                g.x += g.dx;
+                g.y += g.dy;
+
+                // Bounce off walls
+                if (g.x < GRINCH_SIZE/2 || g.x > CANVAS_WIDTH - GRINCH_SIZE/2) g.dx *= -1;
+                if (g.y < GRINCH_SIZE/2 || g.y > CANVAS_HEIGHT - GRINCH_SIZE/2) g.dy *= -1;
+
+                // Collision with Player (Ends Game)
+                if (checkCollision(player, g)) {
+                    setGameState('GAME_OVER');
+                    return;
+                }
+            });
+
+            // --- 4. Collectibles and Goal Check ---
+            // Cocoa Collection
+            cocoa = cocoa.filter(c => {
+                if (checkCollision(player, c)) {
+                    player.warmth += 25; // Restore Warmth
+                    score += 10;
+                    return false; // Remove collected cocoa
+                }
+                return true; // Keep uncollected cocoa
+            });
+
+            // Purse Collection
+            if (!player.hasPurse && checkCollision(player, purse)) {
+                player.hasPurse = true;
+                purse.found = true;
+                score += 50;
+            }
+
+            // Goal Check (Grandma)
+            if (player.hasPurse && checkCollision(player, grandma)) {
+                completeLevel();
+            }
+
+            // --- 5. Update HUD ---
+            updateHUD();
         }
 
-        // Draw Grandma Icon
-        const gCanvas = document.getElementById('icon-grandma');
-        if (gCanvas) {
-            const gCtx = gCanvas.getContext('2d');
-            gCtx.translate(20, 20); drawGrandma(gCtx, 0, 0);
+        /**
+         * Checks circular collision between two entities.
+         */
+        function checkCollision(e1, e2) {
+            const size1 = e1.size || PLAYER_SIZE;
+            const size2 = e2.size || ITEM_SIZE;
+            const distance = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+            return distance < (size1 / 2) + (size2 / 2);
         }
 
-        // Draw Grinch Icon
-        const grCanvas = document.getElementById('icon-grinch');
-        if (grCanvas) {
-            const grCtx = grCanvas.getContext('2d');
-            grCtx.translate(20, 20); drawGrinch(grCtx, 0, 0);
+        /**
+         * Draws all game elements.
+         */
+        function draw() {
+            // Clear canvas (Snow ground)
+            ctx.fillStyle = '#f0f4f8';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Draw Trees (Static obstacles)
+            trees.forEach(t => {
+                drawTree(t.x, t.y, t.size);
+            });
+
+            // Draw Grandma (Goal)
+            drawGrandma(grandma.x, grandma.y, grandma.size);
+
+            // Draw Purse
+            if (!player.hasPurse) {
+                drawPurse(purse.x, purse.y, ITEM_SIZE);
+            } else {
+                // Draw purse attached to player (optional visual cue)
+                // drawPurse(player.x - 10, player.y - 10, ITEM_SIZE * 0.7);
+            }
+
+            // Draw Cocoa (Warmth pickups)
+            cocoa.forEach(c => {
+                drawCocoa(c.x, c.y, ITEM_SIZE);
+            });
+
+            // Draw Grinches (Enemies)
+            grinches.forEach(g => {
+                drawGrinch(g.x, g.y, GRINCH_SIZE);
+            });
+
+            // Draw Player (Last to be on top)
+            drawPlayer(player.x, player.y, PLAYER_SIZE, player.hasPurse);
+
+            // Draw Level Up Message (if active) - this is handled by showLevelUpMessage() now
         }
 
-        // Draw Cocoa Icon
-        const cCanvas = document.getElementById('icon-cocoa');
-        if (cCanvas) {
-            const cCtx = cCanvas.getContext('2d');
-            cCtx.translate(20, 20); drawCocoa(cCtx, 0, 0);
+        /**
+         * Draws the game's start screen.
+         */
+        function drawStartScreen() {
+            // The overlay handles the visual display, just ensure the canvas is cleared
+            ctx.fillStyle = '#f0f4f8';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw instruction icons on the start screen UI
+            drawIcon('icon-player', drawPlayer, { x: 10, y: 10, size: 20, hasPurse: false });
+            drawIcon('icon-grandma', drawGrandma, { x: 10, y: 10, size: 20 });
+            drawIcon('icon-purse', drawPurse, { x: 10, y: 10, size: 20 });
+            drawIcon('icon-grinch', drawGrinch, { x: 10, y: 10, size: 20 });
+            drawIcon('icon-cocoa', drawCocoa, { x: 10, y: 10, size: 20 });
         }
-
-        // Draw Player Icon
-        const plCanvas = document.getElementById('icon-player');
-        if (plCanvas) {
-            const plCtx = plCanvas.getContext('2d');
-            plCtx.translate(15, 15); drawPlayer(plCtx, 0, 0, 1);
-        }
-    }
-
-    // --- UI State Transitions ---
-
-    function endGame(msg) {
-        state.playing = false;
-        const goScreen = document.getElementById('game-over-screen');
-        goScreen.classList.remove('hidden');
         
-        document.getElementById('go-title').innerText = "GAME OVER";
-        document.getElementById('go-title').style.color = "#c0392b";
-        document.getElementById('go-msg').innerText = msg;
-        document.getElementById('final-score').innerText = Math.floor(state.score);
-        document.getElementById('final-level').innerText = state.level;
+        /**
+         * Helper to draw entity icons on the instruction canvas elements.
+         */
+        function drawIcon(id, drawer, params) {
+            const iconCanvas = document.getElementById(id);
+            if (iconCanvas) {
+                const iconCtx = iconCanvas.getContext('2d');
+                iconCtx.clearRect(0, 0, iconCanvas.width, iconCanvas.height);
+                iconCtx.translate(iconCanvas.width / 2, iconCanvas.height / 2);
+                drawer(params.x - params.size/2, params.y - params.size/2, params.size, params.hasPurse);
+                iconCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset translation
+            }
+        }
 
-        const highscoreSection = document.getElementById('highscore-section');
-        highscoreSection.style.display = 'block';
-        document.getElementById('save-score-btn').innerText = "Save Score";
-        document.getElementById('player-name').value = ''; 
-    }
 
-    // Initial Setup
-    window.addEventListener('load', () => {
-        initFirebase();
-        renderIcons(); 
-    });
+        // --- DRAWING ENTITIES (Canvas Replicas) ---
 
-</script>
-</body>
-</html>
+        function drawPlayer(x, y, size, hasPurse) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Body (Blue/Orange)
+            ctx.beginPath();
+            ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+            ctx.fillStyle = hasPurse ? '#f59e0b' : '#3b82f6';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.stroke();
+
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(-size * 0.15, -size * 0.1, size * 0.15, 0, Math.PI * 2);
+            ctx.arc(size * 0.15, -size * 0.1, size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawGrandma(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Chair/Body (Green, Goal area)
+            ctx.beginPath();
+            ctx.rect(-size / 2, -size / 2, size, size);
+            ctx.fillStyle = '#10b981';
+            ctx.fill();
+            ctx.strokeStyle = '#065f46';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Head (White)
+            ctx.beginPath();
+            ctx.arc(0, -size / 2, size / 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#fefefe';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawPurse(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Purse body (Gold)
+            ctx.beginPath();
+            ctx.rect(-size / 2, 0, size, size * 0.8);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Clasp
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.2, 0, Math.PI, true);
+            ctx.lineTo(size * 0.5, 0);
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawCocoa(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Mug (Red)
+            ctx.beginPath();
+            ctx.rect(-size / 2, 0, size, size * 0.8);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+            ctx.strokeStyle = '#991b1b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Cocoa steam (White dots)
+            ctx.fillStyle = 'white';
+            ctx.fillRect(-size * 0.1, -size * 0.2, size * 0.2, size * 0.05);
+            ctx.fillRect(size * 0.2, -size * 0.1, size * 0.1, size * 0.05);
+
+            ctx.restore();
+        }
+
+        function drawGrinch(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Body (Dark Green)
+            ctx.beginPath();
+            ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#065f46';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#047857';
+            ctx.stroke();
+            
+            // Mean Eyes
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(-size * 0.15, -size * 0.1, size * 0.1, 0, Math.PI * 2);
+            ctx.arc(size * 0.15, -size * 0.1, size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Frown
+            ctx.beginPath();
+            ctx.arc(0, size * 0.2, size * 0.2, 0, Math.PI, false);
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawTree(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Trunk (Brown)
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(-size / 4, size / 2, size / 2, size / 2);
+
+            // Leaves/Branches (Green Triangle)
+            ctx.beginPath();
+            ctx.moveTo(0, size / 2);
+            ctx.lineTo(-size * 1.5, -size / 2);
+            ctx.lineTo(size * 1.5, -size / 2);
+            ctx.closePath();
+            ctx.fillStyle = '#065f46';
+            ctx.fill();
+            ctx.strokeStyle = '#047857';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- UI & STATE MANAGEMENT ---
+
+        /**
+         * Updates the Warmth bar and HUD text.
+         */
+        function updateHUD() {
+            hudLevel.textContent = level;
+            hudScore.textContent = score;
+
+            const warmthPercent = player.warmth;
+            warmthBar.style.width = warmthPercent + '%';
+
+            // Change bar color based on warmth level
+            if (warmthPercent > 60) {
+                warmthBar.style.backgroundColor = 'var(--safe-color)';
+            } else if (warmthPercent > 20) {
+                warmthBar.style.backgroundColor = 'var(--warmth-color)';
+            } else {
+                warmthBar.style.backgroundColor = 'var(--danger-color)';
+            }
+        }
+
+        /**
+         * Changes the game state and handles transition effects.
+         */
+        function setGameState(newState) {
+            gameState = newState;
+            overlay.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+
+            if (newState === 'START') {
+                resetGame(1);
+                overlay.classList.remove('hidden');
+                startScreen.classList.remove('hidden');
+            } else if (newState === 'GAME_OVER') {
+                goLevel.textContent = level;
+                goScore.textContent = score;
+                playerNameInput.value = ''; // Clear input
+                submissionMessage.classList.add('hidden');
+                submitScoreButton.disabled = !isAuthReady;
+                
+                // Show game over screen
+                overlay.classList.remove('hidden');
+                gameOverScreen.classList.remove('hidden');
+                
+                // Note: submitScore is NOT automatically called here anymore.
+                // The user must type a name and click the button.
+            } else if (newState === 'PLAYING') {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // --- INPUT HANDLERS ---
+
+        document.addEventListener('keydown', (e) => {
+            if (gameState === 'PLAYING') {
+                keys[e.key.toLowerCase()] = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (gameState === 'PLAYING') {
+                keys[e.key.toLowerCase()] = false;
+                
+                // Reset player velocity if movement keys are released and joystick is inactive
+                if (!joystick.active && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key.match(/^[wasd]$/i))) {
+                    player.dx = 0;
+                    player.dy = 0;
+                }
+            }
+        });
+
+        // --- JOYSTICK HANDLERS (Touch/Mobile Input) ---
+
+        function updateJoystick(x, y) {
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let deltaX = x - centerX;
+            let deltaY = y - centerY;
+            let distance = Math.hypot(deltaX, deltaY);
+
+            // Clamp distance to joystick radius
+            if (distance > joystick.radius) {
+                const ratio = joystick.radius / distance;
+                deltaX *= ratio;
+                deltaY *= ratio;
+                distance = joystick.radius;
+            }
+
+            // Move the visual joystick head
+            joystickHead.style.left = `${deltaX + rect.width / 2 - 25}px`;
+            joystickHead.style.top = `${deltaY + rect.height / 2 - 25}px`;
+
+            // Calculate normalized direction for game logic (joystick.dx/dy)
+            joystick.dx = deltaX / joystick.radius;
+            joystick.dy = deltaY / joystick.radius;
+        }
+
+        function handleStart(e) {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault();
+            const touch = e.changedTouches ? e.changedTouches[0] : e;
+            
+            const rect = joystickArea.getBoundingClientRect();
+            
+            // Check if the touch/click is within the joystick area
+            if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                
+                joystick.active = true;
+                joystickHead.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                updateJoystick(touch.clientX, touch.clientY);
+            }
+        }
+
+        function handleMove(e) {
+            if (gameState !== 'PLAYING' || !joystick.active) return;
+            e.preventDefault();
+            const touch = e.changedTouches ? e.changedTouches[0] : e;
+            updateJoystick(touch.clientX, touch.clientY);
+        }
+
+        function handleEnd(e) {
+            if (!joystick.active) return;
+            e.preventDefault();
+            joystick.active = false;
+            joystick.dx = 0;
+            joystick.dy = 0;
+            
+            // Center the visual joystick head
+            joystickHead.style.left = 'calc(50% - 25px)';
+            joystickHead.style.top = 'calc(50% - 25px)';
+            joystickHead.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+        }
+
+        // Attach touch/mouse listeners for the joystick
+        joystickArea.addEventListener('mousedown', handleStart);
+        joystickArea.addEventListener('mousemove', handleMove);
+        joystickArea.addEventListener('mouseup', handleEnd);
+        joystickArea.addEventListener('mouseleave', handleEnd);
+
+        joystickArea.addEventListener('touchstart', handleStart);
+        joystickArea.addEventListener('touchmove', handleMove);
+        joystickArea.addEventListener('touchend', handleEnd);
+        joystickArea.addEventListener('touchcancel', handleEnd);
+
+
+        // --- INITIALIZATION ---
+
+        window.onload = function() {
+            initializeFirebase(); // Setup Firebase Auth and Leaderboard listener
+
+            // Event listeners for screen transitions
+            document.getElementById('start-game-button').addEventListener('click', () => {
+                resetGame(1);
+                setGameState('PLAYING');
+            });
+
+            document.getElementById('restart-game-button').addEventListener('click', () => {
+                setGameState('START');
+            });
+
+            submitScoreButton.addEventListener('click', submitScore);
+
+            // Start the main loop
+            requestAnimationFrame(gameLoop);
+            
+            // Initial draw for the start screen
+            setGameState('START');
+        };
