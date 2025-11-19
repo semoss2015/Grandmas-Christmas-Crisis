@@ -1,0 +1,64 @@
+diff --git a/index.html b/index.html
+index 1234567..89abcde 100644
+--- a/index.html
++++ b/index.html
+@@ -153,11 +153,11 @@
+-        <div class="mission-item">1. Find the Purse <canvas id="icon-purse" width="40" height="40" class="icon-canvas"></canvas> and return it.</div>
+-        <div class="mission-item">2. Return to Grandma <canvas id="icon-grandma" width="40" height="40" class="icon-canvas"></canvas> to level up.</div>
+-        <div class="mission-item">3. Avoid the Grinch <canvas id="icon-grinch" width="40" height="40" class="icon-canvas"></canvas> (They move faster each level).</div>
+-        <div class="mission-item">4. Collect Cocoa <canvas id="icon-cocoa" width="40" height="40" class="icon-canvas"></canvas> to boost Warmth.</div>
+-        <div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">You are the Helper <canvas id="icon-player" width="30" height="30" class="icon-canvas"></canvas></div>
++        <div class="mission-item">1. Find the Purse <canvas id="icon-purse" width="80" height="80" class="icon-canvas"></canvas> and return it.</div>
++        <div class="mission-item">2. Return to Grandma <canvas id="icon-grandma" width="80" height="80" class="icon-canvas"></canvas> to level up.</div>
++        <div class="mission-item">3. Avoid the Grinch <canvas id="icon-grinch" width="80" height="80" class="icon-canvas"></canvas> (They move faster each level).</div>
++        <div class="mission-item">4. Collect Cocoa <canvas id="icon-cocoa" width="80" height="80" class="icon-canvas"></canvas> to boost Warmth.</div>
++        <div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">You are the Helper <canvas id="icon-player" width="60" height="60" class="icon-canvas"></canvas></div>
+ 
+@@ function drawGrandma(dtCtx, x, y) {
+-    drawImageSafe(dtCtx, sprites.grandma, x - 20, y - 32, 40, 40, (c)=>fallbackGrandma(c, x, y));
++    drawImageSafe(dtCtx, sprites.grandma, x - 40, y - 64, 80, 80, (c)=>fallbackGrandma(c, x, y));
+ }
+ 
+@@ function drawPlayer(dtCtx, x, y, dir = 1) {
+-      dtCtx.drawImage(sprites.player, -16, -16, 32, 32);
++      dtCtx.drawImage(sprites.player, -32, -32, 64, 64);
+ }
+ 
+@@ function drawGrinch(dtCtx, x, y) {
+-    drawImageSafe(dtCtx, sprites.grinch, x - 20, y - 20, 40, 40, (c)=>fallbackGrinch(c, x, y));
++    drawImageSafe(dtCtx, sprites.grinch, x - 40, y - 40, 80, 80, (c)=>fallbackGrinch(c, x, y));
+ }
+ 
+@@ function drawPurse(dtCtx, x, y) {
+-    drawImageSafe(dtCtx, sprites.purse, x - 12, y - 12, 24, 24, (c)=>fallbackPurse(c, x, y));
++    drawImageSafe(dtCtx, sprites.purse, x - 24, y - 24, 48, 48, (c)=>fallbackPurse(c, x, y));
+ }
+ 
+@@ function drawCocoa(dtCtx, x, y) {
+-    drawImageSafe(dtCtx, sprites.cocoa, x - 12, y - 12, 24, 24, (c)=>fallbackCocoa(c, x, y));
++    drawImageSafe(dtCtx, sprites.cocoa, x - 24, y - 24, 48, 48, (c)=>fallbackCocoa(c, x, y));
+ }
+ 
+@@ startLevel tree radius
+-      trees.push({ x: Math.random()*WIDTH, y: Math.random()*HEIGHT, r: 30 + Math.random()*15 });
++      trees.push({ x: Math.random()*WIDTH, y: Math.random()*HEIGHT, r: (30 + Math.random()*15) * 2 });
+ 
+@@ renderIcons purse
+-      drawImageSafe(pctx, sprites.purse, 8, 8, 24, 24, (c)=>fallbackPurse(c, 20, 22));
++      drawImageSafe(pctx, sprites.purse, 16, 16, 48, 48, (c)=>fallbackPurse(c, 40, 40));
+ 
+@@ renderIcons grandma
+-      drawImageSafe(gctx, sprites.grandma, 4, 0, 32, 40, (c)=>fallbackGrandma(c, 20, 22));
++      drawImageSafe(gctx, sprites.grandma, 0, 0, 80, 80, (c)=>fallbackGrandma(c, 40, 40));
+ 
+@@ renderIcons grinch
+-      drawImageSafe(grctx, sprites.grinch, 4, 4, 32, 32, (c)=>fallbackGrinch(c, 20, 20));
++      drawImageSafe(grctx, sprites.grinch, 0, 0, 80, 80, (c)=>fallbackGrinch(c, 40, 40));
+ 
+@@ renderIcons cocoa
+-      drawImageSafe(cctx, sprites.cocoa, 8, 8, 24, 24, (c)=>fallbackCocoa(c, 20, 12));
++      drawImageSafe(cctx, sprites.cocoa, 16, 16, 48, 48, (c)=>fallbackCocoa(c, 40, 40));
+ 
+@@ renderIcons player
+-        plctx.drawImage(sprites.player, 0, 0, 30, 30);
++        plctx.drawImage(sprites.player, 0, 0, 60, 60);
