@@ -51,11 +51,11 @@
       <p>Grandma is freezing! Bring her items to warm her up.</p>
 
       <div class="mission-list">
-        <div class="mission-item">1. Find the Purse <canvas id="icon-purse" width="40" height="40" class="icon-canvas"></canvas> and return it.</div>
-        <div class="mission-item">2. Return to Grandma <canvas id="icon-grandma" width="40" height="40" class="icon-canvas"></canvas> to level up.</div>
-        <div class="mission-item">3. Avoid the Grinch <canvas id="icon-grinch" width="40" height="40" class="icon-canvas"></canvas> (They move faster each level).</div>
-        <div class="mission-item">4. Collect Cocoa <canvas id="icon-cocoa" width="40" height="40" class="icon-canvas"></canvas> to boost Warmth.</div>
-        <div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">You are the Helper <canvas id="icon-player" width="30" height="30" class="icon-canvas"></canvas></div>
+        <div class="mission-item">1. Find the Purse <canvas id="icon-purse" width="80" height="80" class="icon-canvas"></canvas> and return it.</div>
+        <div class="mission-item">2. Return to Grandma <canvas id="icon-grandma" width="80" height="80" class="icon-canvas"></canvas> to level up.</div>
+        <div class="mission-item">3. Avoid the Grinch <canvas id="icon-grinch" width="80" height="80" class="icon-canvas"></canvas> (They move faster each level).</div>
+        <div class="mission-item">4. Collect Cocoa <canvas id="icon-cocoa" width="80" height="80" class="icon-canvas"></canvas> to boost Warmth.</div>
+        <div style="text-align:center; margin-top:10px; font-size:12px; color:#666;">You are the Helper <canvas id="icon-player" width="60" height="60" class="icon-canvas"></canvas></div>
       </div>
 
       <p style="font-size:12px; color:#7f8c8d; margin-top:0;">(Drag on screen to move)</p>
@@ -300,7 +300,7 @@
 
   // Sprite-based draw functions with fallbacks
   function drawGrandma(dtCtx, x, y) {
-    drawImageSafe(dtCtx, sprites.grandma, x - 20, y - 32, 40, 40, (c)=>fallbackGrandma(c, x, y));
+    drawImageSafe(dtCtx, sprites.grandma, x - 40, y - 64, 80, 80, (c)=>fallbackGrandma(c, x, y));
   }
   function drawPlayer(dtCtx, x, y, dir = 1) {
     // Simple flip by scaling for left/right
@@ -308,23 +308,23 @@
       dtCtx.save();
       dtCtx.translate(x, y);
       if (dir < 0) dtCtx.scale(-1, 1);
-      dtCtx.drawImage(sprites.player, -16, -16, 32, 32);
+      dtCtx.drawImage(sprites.player, -32, -32, 64, 43);
       dtCtx.restore();
     } else {
       fallbackPlayer(dtCtx, x, y, dir);
     }
   }
   function drawGrinch(dtCtx, x, y) {
-    drawImageSafe(dtCtx, sprites.grinch, x - 20, y - 20, 40, 40, (c)=>fallbackGrinch(c, x, y));
+    drawImageSafe(dtCtx, sprites.grinch, x - 40, y - 40, 80, 80, (c)=>fallbackGrinch(c, x, y));
   }
   function drawTree(dtCtx, x, y, r) {
     drawImageSafe(dtCtx, sprites.tree, x - r/2, y - r, r, r, (c)=>fallbackTree(c, x, y, r));
   }
   function drawPurse(dtCtx, x, y) {
-    drawImageSafe(dtCtx, sprites.purse, x - 12, y - 12, 24, 24, (c)=>fallbackPurse(c, x, y));
+    drawImageSafe(dtCtx, sprites.purse, x - 24, y - 24, 48, 48, (c)=>fallbackPurse(c, x, y));
   }
   function drawCocoa(dtCtx, x, y) {
-    drawImageSafe(dtCtx, sprites.cocoa, x - 12, y - 12, 24, 24, (c)=>fallbackCocoa(c, x, y));
+    drawImageSafe(dtCtx, sprites.cocoa, x - 24, y - 24, 48, 48, (c)=>fallbackCocoa(c, x, y));
   }
 
   function draw(dtCtx = ctx) {
@@ -497,7 +497,7 @@
     trees = [];
     const treeCount = 15 + levelNum * 2;
     for(let i=0;i<treeCount;i++){
-      trees.push({ x: Math.random()*WIDTH, y: Math.random()*HEIGHT, r: 30 + Math.random()*15 });
+      trees.push({ x: Math.random()*WIDTH, y: Math.random()*HEIGHT, r: (30 + Math.random()*15)*2 });
     }
 
     grinches = [];
@@ -540,32 +540,32 @@
     if (purseCanvas) {
       const pctx = purseCanvas.getContext('2d');
       pctx.clearRect(0,0,purseCanvas.width,purseCanvas.height);
-      drawImageSafe(pctx, sprites.purse, 8, 8, 24, 24, (c)=>fallbackPurse(c, 20, 22));
+      drawImageSafe(pctx, sprites.purse, 16, 16, 48, 48, (c)=>fallbackPurse(c, 40, 40));
     }
     const gCanvas = document.getElementById('icon-grandma');
     if (gCanvas) {
       const gctx = gCanvas.getContext('2d');
       gctx.clearRect(0,0,gCanvas.width,gCanvas.height);
-      drawImageSafe(gctx, sprites.grandma, 4, 0, 32, 40, (c)=>fallbackGrandma(c, 20, 22));
+      drawImageSafe(gctx, sprites.grandma, 0, 0, 80, 80, (c)=>fallbackGrandma(c, 40, 40));
     }
     const grCanvas = document.getElementById('icon-grinch');
     if (grCanvas) {
       const grctx = grCanvas.getContext('2d');
       grctx.clearRect(0,0,grCanvas.width,grCanvas.height);
-      drawImageSafe(grctx, sprites.grinch, 4, 4, 32, 32, (c)=>fallbackGrinch(c, 20, 20));
+      drawImageSafe(grctx, sprites.grinch, 0, 0, 80, 80, (c)=>fallbackGrinch(c, 40, 40));
     }
     const cCanvas = document.getElementById('icon-cocoa');
     if (cCanvas) {
       const cctx = cCanvas.getContext('2d');
       cctx.clearRect(0,0,cCanvas.width,cCanvas.height);
-      drawImageSafe(cctx, sprites.cocoa, 8, 8, 24, 24, (c)=>fallbackCocoa(c, 20, 12));
+      drawImageSafe(cctx, sprites.cocoa, 16, 16, 48, 48, (c)=>fallbackCocoa(c, 40, 40));
     }
     const plCanvas = document.getElementById('icon-player');
     if (plCanvas) {
       const plctx = plCanvas.getContext('2d');
       plctx.clearRect(0,0,plCanvas.width,plCanvas.height);
       if (sprites.player && sprites.player.complete && sprites.player.naturalWidth > 0) {
-        plctx.drawImage(sprites.player, 0, 0, 30, 30);
+        plctx.drawImage(sprites.player, 0, 0, 60, 60);
       } else {
         fallbackPlayer(plctx, 15, 15, 1);
       }
