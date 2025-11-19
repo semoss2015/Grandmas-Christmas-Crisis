@@ -88,7 +88,7 @@
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, addDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  // Replace with your real config
+  // Firebase config (unchanged from your working build)
   const firebaseConfig = {
     apiKey: "AIzaSyBMlyMbSEW7kJrh0Xjv3DS59u2fvyhIL9o",
     authDomain: "grandmas-christmas-crisis.firebaseapp.com",
@@ -184,8 +184,43 @@
   canvas.addEventListener('touchmove', handleTouchMove, {passive:false});
   canvas.addEventListener('touchend', handleTouchEnd);
 
-  // Drawing functions
-  function drawGrandma(ctx, x, y) {
+  // --- Sprite loading ---
+  const sprites = {
+    player: new Image(),
+    grandma: new Image(),
+    grinch: new Image(),
+    purse: new Image(),
+    cocoa: new Image(),
+    tree: new Image()
+  };
+  sprites.player.src = "assets/player.png";
+  sprites.grandma.src = "assets/grandma.png";
+  sprites.grinch.src = "assets/grinch.png";
+  sprites.purse.src = "assets/purse.png";
+  sprites.cocoa.src = "assets/cocoa.png";
+  sprites.tree.src = "assets/tree.png";
+
+  let spritesLoaded = 0;
+  const spriteKeys = Object.keys(sprites);
+  spriteKeys.forEach(k => {
+    sprites[k].addEventListener('load', () => { spritesLoaded++; if (spritesLoaded === spriteKeys.length) renderIcons(); });
+    sprites[k].addEventListener('error', () => { console.warn(`Sprite failed to load: ${k}`); spritesLoaded++; if (spritesLoaded === spriteKeys.length) renderIcons(); });
+  });
+
+  // Helpers: safe draw image with fallback rectangle
+  function drawImageSafe(dtCtx, img, dx, dy, dw, dh, fallbackFn) {
+    if (img && img.complete && img.naturalWidth > 0) {
+      dtCtx.drawImage(img, dx, dy, dw, dh);
+    } else if (fallbackFn) {
+      fallbackFn(dtCtx, dx + dw/2, dy + dh/2);
+    } else {
+      dtCtx.fillStyle = "#ccc";
+      dtCtx.fillRect(dx, dy, dw, dh);
+    }
+  }
+
+  // Original vector fallbacks (used if sprite missing)
+  function fallbackGrandma(ctx, x, y) {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.ellipse(x, y+25, 20, 10, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(x, y - 20); ctx.lineTo(x + 25, y + 30); ctx.lineTo(x - 25, y + 30); ctx.fill();
@@ -198,8 +233,7 @@
     ctx.beginPath(); ctx.arc(x, y-15, 5, 0, Math.PI, false); ctx.stroke();
     ctx.restore();
   }
-
-  function drawPlayer(ctx, x, y, dir = 1) {
+  function fallbackPlayer(ctx, x, y, dir = 1) {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.ellipse(x, y+20, 15, 5, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); ctx.fill();
@@ -220,8 +254,7 @@
     ctx.beginPath(); ctx.arc(x + 4 + lookDir, y - 2, 1.5, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
-
-  function drawGrinch(ctx, x, y) {
+  function fallbackGrinch(ctx, x, y) {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.ellipse(x, y+20, 15, 5, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill();
@@ -236,8 +269,7 @@
     ctx.beginPath(); ctx.arc(x, y + 8, 8, Math.PI, 0); ctx.stroke();
     ctx.restore();
   }
-
-  function drawTree(ctx, x, y, r) {
+  function fallbackTree(ctx, x, y, r) {
     ctx.save();
     ctx.fillStyle = "#795548"; ctx.fillRect(x - r/6, y, r/3, r/2);
     ctx.fillStyle = "#2ecc71";
@@ -250,22 +282,49 @@
     ctx.beginPath(); ctx.moveTo(x, y - r * 2.8); ctx.lineTo(x + 10, y - r * 2.4); ctx.lineTo(x - 10, y - r * 2.4); ctx.fill();
     ctx.restore();
   }
-
-  function drawPurse(ctx, x, y) {
+  function fallbackPurse(ctx, x, y) {
     ctx.save();
     ctx.fillStyle = "#f39c12"; ctx.fillRect(x - 12, y - 10, 24, 20);
     ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(x, y - 10, 4, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = "#f39c12"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y - 10, 10, Math.PI, 0); ctx.stroke();
     ctx.restore();
   }
-
-  function drawCocoa(ctx, x, y) {
+  function fallbackCocoa(ctx, x, y) {
     ctx.save();
-    ctx.fillStyle = "#795548"; ctx.fillRect(x - 10, y, 20, 20); // mug
-    ctx.fillStyle = "#c0392b"; ctx.fillRect(x - 10, y, 20, 5);  // rim
+    ctx.fillStyle = "#795548"; ctx.fillRect(x - 10, y, 20, 20);
+    ctx.fillStyle = "#c0392b"; ctx.fillRect(x - 10, y, 20, 5);
     ctx.strokeStyle = "#795548"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(x + 10, y + 10, 6, 1.5*Math.PI, 0.5*Math.PI); ctx.stroke(); // handle
+    ctx.beginPath(); ctx.arc(x + 10, y + 10, 6, 1.5*Math.PI, 0.5*Math.PI); ctx.stroke();
     ctx.restore();
+  }
+
+  // Sprite-based draw functions with fallbacks
+  function drawGrandma(dtCtx, x, y) {
+    drawImageSafe(dtCtx, sprites.grandma, x - 20, y - 32, 40, 40, (c)=>fallbackGrandma(c, x, y));
+  }
+  function drawPlayer(dtCtx, x, y, dir = 1) {
+    // Simple flip by scaling for left/right
+    if (sprites.player && sprites.player.complete && sprites.player.naturalWidth > 0) {
+      dtCtx.save();
+      dtCtx.translate(x, y);
+      if (dir < 0) dtCtx.scale(-1, 1);
+      dtCtx.drawImage(sprites.player, -16, -16, 32, 32);
+      dtCtx.restore();
+    } else {
+      fallbackPlayer(dtCtx, x, y, dir);
+    }
+  }
+  function drawGrinch(dtCtx, x, y) {
+    drawImageSafe(dtCtx, sprites.grinch, x - 20, y - 20, 40, 40, (c)=>fallbackGrinch(c, x, y));
+  }
+  function drawTree(dtCtx, x, y, r) {
+    drawImageSafe(dtCtx, sprites.tree, x - r/2, y - r, r, r, (c)=>fallbackTree(c, x, y, r));
+  }
+  function drawPurse(dtCtx, x, y) {
+    drawImageSafe(dtCtx, sprites.purse, x - 12, y - 12, 24, 24, (c)=>fallbackPurse(c, x, y));
+  }
+  function drawCocoa(dtCtx, x, y) {
+    drawImageSafe(dtCtx, sprites.cocoa, x - 12, y - 12, 24, 24, (c)=>fallbackCocoa(c, x, y));
   }
 
   function draw(dtCtx = ctx) {
@@ -476,16 +535,41 @@
   }
 
   function renderIcons() {
+    // Draw icons using sprites; fallback to vector if sprite not ready
     const purseCanvas = document.getElementById('icon-purse');
-    if (purseCanvas) { const pctx = purseCanvas.getContext('2d'); pctx.clearRect(0,0,purseCanvas.width,purseCanvas.height); drawPurse(pctx, 20, 22); }
+    if (purseCanvas) {
+      const pctx = purseCanvas.getContext('2d');
+      pctx.clearRect(0,0,purseCanvas.width,purseCanvas.height);
+      drawImageSafe(pctx, sprites.purse, 8, 8, 24, 24, (c)=>fallbackPurse(c, 20, 22));
+    }
     const gCanvas = document.getElementById('icon-grandma');
-    if (gCanvas) { const gctx = gCanvas.getContext('2d'); gctx.clearRect(0,0,gCanvas.width,gCanvas.height); drawGrandma(gctx, 20, 22); }
+    if (gCanvas) {
+      const gctx = gCanvas.getContext('2d');
+      gctx.clearRect(0,0,gCanvas.width,gCanvas.height);
+      drawImageSafe(gctx, sprites.grandma, 4, 0, 32, 40, (c)=>fallbackGrandma(c, 20, 22));
+    }
     const grCanvas = document.getElementById('icon-grinch');
-    if (grCanvas) { const grctx = grCanvas.getContext('2d'); grctx.clearRect(0,0,grCanvas.width,grCanvas.height); drawGrinch(grctx, 20, 20); }
+    if (grCanvas) {
+      const grctx = grCanvas.getContext('2d');
+      grctx.clearRect(0,0,grCanvas.width,grCanvas.height);
+      drawImageSafe(grctx, sprites.grinch, 4, 4, 32, 32, (c)=>fallbackGrinch(c, 20, 20));
+    }
     const cCanvas = document.getElementById('icon-cocoa');
-    if (cCanvas) { const cctx = cCanvas.getContext('2d'); cctx.clearRect(0,0,cCanvas.width,cCanvas.height); drawCocoa(cctx, 20, 12); }
+    if (cCanvas) {
+      const cctx = cCanvas.getContext('2d');
+      cctx.clearRect(0,0,cCanvas.width,cCanvas.height);
+      drawImageSafe(cctx, sprites.cocoa, 8, 8, 24, 24, (c)=>fallbackCocoa(c, 20, 12));
+    }
     const plCanvas = document.getElementById('icon-player');
-    if (plCanvas) { const plctx = plCanvas.getContext('2d'); plctx.clearRect(0,0,plCanvas.width,plCanvas.height); drawPlayer(plctx, 15, 15, 1); }
+    if (plCanvas) {
+      const plctx = plCanvas.getContext('2d');
+      plctx.clearRect(0,0,plCanvas.width,plCanvas.height);
+      if (sprites.player && sprites.player.complete && sprites.player.naturalWidth > 0) {
+        plctx.drawImage(sprites.player, 0, 0, 30, 30);
+      } else {
+        fallbackPlayer(plctx, 15, 15, 1);
+      }
+    }
   }
 
   async function submitScore() {
@@ -528,14 +612,13 @@
     document.body.appendChild(modal);
   }
 
-  // Wire up buttons and boot sequence without inline onclick
+  // Boot sequence
   window.addEventListener('DOMContentLoaded', () => {
-    // Buttons
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('try-again-btn').addEventListener('click', startGame);
     document.getElementById('save-score-btn').addEventListener('click', submitScore);
 
-    // Icons must render after draw functions exist
+    // Render icons immediately (will fallback to vector), then re-render once sprites load
     renderIcons();
 
     // Firebase init (leaderboard can fail silently without breaking gameplay)
